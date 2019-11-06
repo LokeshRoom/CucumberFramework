@@ -6,13 +6,11 @@ import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
-import cucumber.api.java.After;
+import io.cucumber.java.After;
 import org.json.JSONObject;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
-
-import java.util.logging.Logger;
 
 
 public class Operation extends ObjectReader {
@@ -23,6 +21,7 @@ public class Operation extends ObjectReader {
 
     private ExtentTest extentTest;
     private ExtentHtmlReporter extentHtmlReporter = new ExtentHtmlReporter(System.getProperty("user.dir") + "\\Reports\\Reports.html");
+
     public Operation() throws Exception {
         System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir") + "\\src\\test\\resources\\Drivers\\chromedriver.exe");
         driver = new ChromeDriver();
@@ -101,12 +100,38 @@ public class Operation extends ObjectReader {
 
     public void assertTextExists(String text) throws Exception {
         try {
-            WebElement webElement = driver.findElement(By.xpath("//*[contains(text(),'"+text+"')]"));
-            if (webElement==null)
+            WebElement webElement = driver.findElement(By.xpath("//*[contains(text(),'" + text + "')]"));
+            if (webElement == null)
                 throw new Exception();
             extentTest.log(Status.PASS, "Text exists in page");
         } catch (Exception e) {
             extentTest.log(Status.FAIL, "Right click failed on Element:" + e);
+            throw e;
+        }
+    }
+
+    public void javaScriptExecutorClick(String element, String page) {
+        WebElement webElement = this.findElement(element, page);
+        JavascriptExecutor jexecutor = (JavascriptExecutor) driver;
+        jexecutor.executeScript("arguments[].click()", webElement);
+    }
+
+    public void acceptAlert(String acceptOrReject) throws Exception {
+        try {
+            Alert alert = driver.switchTo().alert();
+            if (acceptOrReject.equalsIgnoreCase("accept")) {
+                alert.accept();
+                extentTest.log(Status.PASS, "Alert Accepted");
+            } else if (acceptOrReject.equalsIgnoreCase("reject")) {
+                alert.dismiss();
+                extentTest.log(Status.PASS, "Alert Dismissed");
+            } else throw new Exception("Enter Accept or Reject");
+
+        } catch (NoAlertPresentException e) {
+            extentTest.log(Status.FAIL, "No Alerts are present on page:" + e);
+            throw e;
+        } catch (Exception e) {
+            extentTest.log(Status.FAIL, "Not able to " + acceptOrReject + ":" + e);
             throw e;
         }
     }
